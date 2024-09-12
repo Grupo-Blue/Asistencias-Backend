@@ -1,4 +1,29 @@
-import { client } from '../config/connectToPostgre.js'
+import pkg from 'pg'
+const { Client } = pkg
+
+const client = new Client({
+  user: 'default',
+  host: 'ep-restless-feather-07309582-pooler.us-east-1.postgres.vercel-storage.com',
+  database: 'verceldb',
+  password: 'KSk0VeZJMR2b',
+  port: 5432,
+  ssl: {
+    rejectUnauthorized: false
+  }
+})
+
+let isConected
+const connectToDb = async () => {
+  try {
+    if (!isConected) {
+      await client.connect()
+      isConected = true
+      console.log('PostgreDB Conectada...')
+    }
+  } catch (err) {
+    console.error('Error al conectar con PostgreSQL:', err.message)
+  }
+}
 
 const createTableGrupos = `
 CREATE TABLE IF NOT EXISTS grupos (
@@ -22,7 +47,7 @@ CREATE TABLE IF NOT EXISTS estudiantes (
 )`
 
 const createTableInasistencias = `
-CREATE TABLE IF NOT EXISTS inaisistencias (
+CREATE TABLE IF NOT EXISTS inasistencias (
   id SERIAL PRIMARY KEY,
   fecha TIMESTAMP NOT NULL,
   estado VARCHAR(45) NOT NULL,
@@ -39,8 +64,10 @@ CREATE TABLE IF NOT EXISTS usuarios (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(45) NOT NULL,
   apellido VARCHAR(45) NOT NULL,
+  username VARCHAR(45) UNIQUE NOT NULL,
   clave VARCHAR(45) NOT NULL,
-  rol VARCHAR(45)
+  rol VARCHAR(45),
+  activo BOOLEAN NOT NULL
 )`
 
 const createTableAsistencias = `
@@ -58,7 +85,7 @@ CREATE TABLE IF NOT EXISTS asistencias (
 
 async function createTable () {
   try {
-    await client.connect()
+    connectToDb()
     console.log('Conexión exitosa a la base de datos')
 
     await client.query(createTableGrupos)
